@@ -4,11 +4,8 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import './App.css';
 
 const images = [
-  "https://picsum.photos/600/300?random=1",
-  "https://picsum.photos/600/300?random=2",
-  "https://picsum.photos/600/300?random=3",
-  "https://picsum.photos/600/300?random=4",
-  "https://picsum.photos/600/300?random=5"
+  "https://testvidz.blob.core.windows.net/rrv/RRV_Painting_Shakuntala.jpg?random=1",
+  "https://testvidz.blob.core.windows.net/rrv/RRV_Painting_Woman_holding_a_fruit.jpg?random=2",
 ];
 
 function App() {
@@ -27,15 +24,15 @@ function App() {
     setCurrentIndex(prev => (prev + 1) % images.length);
   };
 
-  useEffect(() => {
-    let interval;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        nextImage();
-      }, 2000);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
+  // useEffect(() => {
+  //   let interval;
+  //   if (isPlaying) {
+  //     interval = setInterval(() => {
+  //       nextImage();
+  //     }, 2000);
+  //   }
+  //   return () => clearInterval(interval);
+  // }, [isPlaying]);
 
   useEffect(() => {
     const lowerTranscript = transcript.toLowerCase();
@@ -55,15 +52,28 @@ function App() {
     setPrompt(transcript);
   }, [transcript, resetTranscript]);
 
-  const generateAnswer = async (prompt) => {
+  const generateAnswer = async (prompt) => { 
     try {
-      const response = await axios.post('/api/generate-answer', { prompt });
-      return response.data.answer;
+      const imageNames = ["Sakuntla", "Woman Holding a Fruit", "Mountain", "River", "Tree"];
+      const currentName = imageNames[currentIndex] || "Unknown";
+      const response = await axios.post('http://20.15.109.162:5000/telephony-response', {
+        question: prompt,
+        session_id: "A123E",
+        image_name: currentName
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const answer = response.data.response; 
+      console.log("Answer is:",answer)
+      return answer;
     } catch (error) {
       console.error("Error generating answer:", error);
       return "Sorry, I couldn't generate an answer.";
     }
   };
+  
 
   const textToSpeech = async (text) => {
     try {
