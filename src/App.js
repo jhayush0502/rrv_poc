@@ -13,6 +13,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [answer, setAnswer] = useState("");
+  const [videoUrl, setVideoUrl] = useState(null);
 
   const { transcript, resetTranscript, listening } = useSpeechRecognition();
 
@@ -52,20 +53,29 @@ function App() {
     setPrompt(transcript);
   }, [transcript, resetTranscript]);
 
+
+  const extractVideoUrl = (responseText) => {
+    const urlMatch = responseText.match(/https?:\/\/\S+\.mp4/);
+    return urlMatch ? urlMatch[0] : null;
+  };  
+
   const generateAnswer = async (prompt) => { 
     try {
-      const imageNames = ["Sakuntla", "Woman Holding a Fruit", "Mountain", "River", "Tree"];
+      const imageNames = ["Shakuntala on a Swing", "Woman holding a fruit", "Mountain", "River", "Tree"];
       const currentName = imageNames[currentIndex] || "Unknown";
+      console.log("Image:",currentName)
       const response = await axios.post('http://20.15.109.162:5000/telephony-response', {
         question: prompt,
-        session_id: "A123E",
+        session_id: "Mayank2",
         image_name: currentName
       }, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
-      const answer = response.data.response; 
+      const answer = response.data.response;
+      const videoUrl = extractVideoUrl(answer);
+      setVideoUrl(videoUrl);  
       console.log("Answer is:",answer)
       return answer;
     } catch (error) {
@@ -121,11 +131,19 @@ function App() {
             const generatedAnswer = await generateAnswer(prompt);
             setAnswer(generatedAnswer); 
 
-            await textToSpeech(generatedAnswer);
+            //await textToSpeech(generatedAnswer);
           }}
         >
           Stop
         </button>
+        <button className="control-btn" onClick={() => {
+            setPrompt("");
+            resetTranscript();
+            setVideoUrl(null);
+            setAnswer(null);
+        }}>
+    Reset
+  </button>
       </div>
 
       <div className="voice-info">
@@ -146,9 +164,17 @@ function App() {
         </div>
       )}
 
+      {videoUrl && (
+        <div className="video-player-container">
+          <video width="600" controls>
+            <source src={videoUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )}
+
     </div>
   );
 }
 
 export default App;
-
